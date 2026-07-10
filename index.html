@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SHOCKFLASH - Archive of Classic Flash Games</title>
+    <title>SHOCKFLASH - Publish Flash Games Forever</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@ruffle-rs/ruffle"></script>
 </head>
@@ -13,11 +13,12 @@
         <div class="container">
             <div class="logo">
                 <h1>⚡ SHOCKFLASH</h1>
-                <p class="tagline">Archive of Shockwave Flash Games</p>
+                <p class="tagline">Publish Flash Games Forever</p>
             </div>
             <nav class="nav">
                 <a href="#home" class="nav-link active">Home</a>
                 <a href="#games" class="nav-link">Games</a>
+                <a href="#upload" class="nav-link">Publish</a>
                 <a href="#about" class="nav-link">About</a>
             </nav>
         </div>
@@ -27,10 +28,35 @@
     <section class="hero">
         <div class="hero-content">
             <h2>Welcome to SHOCKFLASH</h2>
-            <p>Relive the golden age of Flash gaming. Explore our archive of classic games powered by Ruffle emulator.</p>
+            <p>The eternal archive where Flash games live forever. Upload your SWF and it stays published permanently.</p>
             <div class="search-bar">
                 <input type="text" id="searchInput" placeholder="Search games...">
                 <button id="searchBtn">🔍 Search</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Upload Section -->
+    <section id="upload" class="upload-section">
+        <div class="container">
+            <h2>📤 Publish Your Flash Game Forever</h2>
+            <p>Upload a SWF file and it gets published permanently on SHOCKFLASH</p>
+            
+            <div class="upload-zone" id="uploadZone">
+                <div class="upload-content">
+                    <div class="upload-icon">📁</div>
+                    <h3>Drag & Drop Your SWF File Here</h3>
+                    <p>or click to browse</p>
+                    <input type="file" id="fileInput" accept=".swf" style="display: none;">
+                </div>
+            </div>
+
+            <div id="uploadStatus" class="upload-status" style="display: none;">
+                <p id="statusMessage"></p>
+            </div>
+
+            <div id="uploadSuccess" class="upload-success" style="display: none;">
+                <p>✅ Game published! It will appear on the site shortly.</p>
             </div>
         </div>
     </section>
@@ -54,7 +80,7 @@
     <!-- Games Grid -->
     <section id="games" class="games-section">
         <div class="container">
-            <h2>Game Archive</h2>
+            <h2>Published Games</h2>
             <div class="games-grid" id="gamesGrid">
                 <!-- Games will be loaded here by JavaScript -->
             </div>
@@ -91,8 +117,8 @@
         <div class="container">
             <h2>About SHOCKFLASH</h2>
             <p>
-                SHOCKFLASH is a museum of classic Flash games from the golden era of web gaming. 
-                Using the <strong>Ruffle emulator</strong>, we can play these archived SWF files in modern browsers 
+                SHOCKFLASH is an eternal archive where Flash games are published forever. 
+                Using the <strong>Ruffle emulator</strong>, we preserve and play these archived SWF files in modern browsers 
                 without the need for the deprecated Flash Player plugin.
             </p>
             <p>

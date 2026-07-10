@@ -20,8 +20,8 @@ async function loadGamesAutomatically() {
         
         return swfFiles;
     } catch (error) {
-        console.log('Auto-detection not available, using local games list');
-        return null;
+        console.log('Reading games directory...');
+        return [];
     }
 }
 
@@ -31,142 +31,21 @@ function generateGameFromSwfFile(filename) {
     const capitalizedName = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     
     const categories = ['action', 'puzzle', 'adventure', 'sports', 'strategy', 'casual'];
-    const emojis = ['🎮', '🎯', '🎲', '🏆', '⚔️', '🧩', '🚀', '🌟'];
+    const emojis = ['🎮', '🎯', '🎲', '🏆', '⚔️', '🧩', '🚀', '🌟', '🎪', '🎭', '🎨', '🎬'];
     
     return {
         id: Math.random(),
         title: capitalizedName,
-        developer: 'Classic Flash Game',
-        year: 2010,
+        developer: 'Published Game',
+        year: new Date().getFullYear(),
         category: categories[Math.floor(Math.random() * categories.length)],
-        description: `${capitalizedName} - A classic Flash game. Click to play!`,
+        description: `${capitalizedName} - A classic Flash game preserved on SHOCKFLASH.`,
         emoji: emojis[Math.floor(Math.random() * emojis.length)],
         swf: `games/${filename}`
     };
 }
 
-let games = [
-    {
-        id: 1,
-        title: "Flash Quest Adventure",
-        developer: "FlashStudios Inc.",
-        year: 2008,
-        category: "adventure",
-        description: "Embark on an epic journey through mystical lands. Solve puzzles and defeat monsters in this classic Flash adventure game.",
-        emoji: "🗺️",
-        swf: "games/quest.swf"
-    },
-    {
-        id: 2,
-        title: "Rocket Blast",
-        developer: "ArcadeMasters",
-        year: 2010,
-        category: "action",
-        description: "High-octane action shooter! Navigate through space and destroy asteroids. How high can you score?",
-        emoji: "🚀",
-        swf: "games/rocket.swf"
-    },
-    {
-        id: 3,
-        title: "Puzzle Paradise",
-        developer: "LogicGames Ltd.",
-        year: 2009,
-        category: "puzzle",
-        description: "Mind-bending puzzle game with colorful blocks and challenging levels. Test your logic skills!",
-        emoji: "🧩",
-        swf: "games/puzzle.swf"
-    },
-    {
-        id: 4,
-        title: "Soccer Star",
-        developer: "SportGames Co.",
-        year: 2011,
-        category: "sports",
-        description: "Score epic goals! Play as your favorite soccer team and compete for the championship.",
-        emoji: "⚽",
-        swf: "games/soccer.swf"
-    },
-    {
-        id: 5,
-        title: "Strategy War",
-        developer: "StrategyMind Games",
-        year: 2007,
-        category: "strategy",
-        description: "Command your armies and conquer the battlefield. A turn-based strategy game with deep gameplay.",
-        emoji: "⚔️",
-        swf: "games/strategy.swf"
-    },
-    {
-        id: 6,
-        title: "Candy Match",
-        developer: "CasualPlay Inc.",
-        year: 2012,
-        category: "casual",
-        description: "Match colorful candies and complete levels. A fun and addictive casual puzzle game!",
-        emoji: "🍭",
-        swf: "games/candy.swf"
-    },
-    {
-        id: 7,
-        title: "Jungle Runner",
-        developer: "ActionStudio",
-        year: 2009,
-        category: "action",
-        description: "Run through dangerous jungles, avoid obstacles, and collect treasures. Never stop moving!",
-        emoji: "🐆",
-        swf: "games/jungle.swf"
-    },
-    {
-        id: 8,
-        title: "Portal Puzzle",
-        developer: "MindGame Studios",
-        year: 2010,
-        category: "puzzle",
-        description: "Use portals to solve intricate puzzles. A brain-teaser that will challenge your mind!",
-        emoji: "🌀",
-        swf: "games/portal.swf"
-    },
-    {
-        id: 9,
-        title: "Zombie Defense",
-        developer: "HorrorGames Ltd.",
-        year: 2011,
-        category: "action",
-        description: "Defend your base against waves of zombies. Build towers and survive the apocalypse!",
-        emoji: "🧟",
-        swf: "games/zombie.swf"
-    },
-    {
-        id: 10,
-        title: "Racing Fury",
-        developer: "SpeedGames Inc.",
-        year: 2008,
-        category: "sports",
-        description: "Race at breakneck speeds! Compete in high-speed competitions across exotic tracks.",
-        emoji: "🏎️",
-        swf: "games/racing.swf"
-    },
-    {
-        id: 11,
-        title: "Chess Master",
-        developer: "ClassicGames Co.",
-        year: 2006,
-        category: "strategy",
-        description: "Challenge the computer in this classic chess game. Multiple difficulty levels available.",
-        emoji: "♟️",
-        swf: "games/chess.swf"
-    },
-    {
-        id: 12,
-        title: "Bubble Pop",
-        developer: "CasualPlay Inc.",
-        year: 2010,
-        category: "casual",
-        description: "Pop bubbles before they reach the top! A simple yet addictive casual game.",
-        emoji: "🫧",
-        swf: "games/bubbles.swf"
-    }
-];
+let games = [];
 
 let currentFilter = "all";
 let currentGame = null;
@@ -174,12 +53,11 @@ let rufflePlayer = null;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
-    // Try to auto-detect SWF files
-    const detectedFiles = await loadGamesAutomatically();
+    // Load all SWF files from /games/ directory
+    const swfFiles = await loadGamesAutomatically();
     
-    // If we found SWF files, use them instead of default list
-    if (detectedFiles && detectedFiles.length > 0) {
-        games = detectedFiles.map(filename => generateGameFromSwfFile(filename));
+    if (swfFiles.length > 0) {
+        games = swfFiles.map(filename => generateGameFromSwfFile(filename));
     }
     
     renderGames();
@@ -227,6 +105,11 @@ function setupEventListeners() {
 function renderGames() {
     const gamesGrid = document.getElementById('gamesGrid');
     gamesGrid.innerHTML = '';
+
+    if (games.length === 0) {
+        gamesGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">No games yet. Add SWF files to /games/ to publish them here forever!</p>';
+        return;
+    }
 
     const filteredGames = currentFilter === 'all' 
         ? games 
@@ -296,9 +179,8 @@ function openGameModal(game) {
             // Fallback UI if SWF not found
             ruffleContainer.innerHTML = `
                 <div style="text-align: center; padding: 40px; color: var(--text-muted);">
-                    <p>🎮 Game Player Ready</p>
-                    <p style="font-size: 0.9rem; margin-top: 10px;">SWF file: ${game.swf}</p>
-                    <p style="font-size: 0.8rem; margin-top: 20px;">Add your SWF files to /games/</p>
+                    <p>⚠️ Game Not Found</p>
+                    <p style="font-size: 0.9rem; margin-top: 10px;">File: ${game.swf}</p>
                 </div>
             `;
         });

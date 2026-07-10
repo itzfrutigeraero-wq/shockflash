@@ -1,11 +1,9 @@
 // Auto-detect all SWF files in /games/ directory
 async function loadGamesAutomatically() {
     try {
-        // Fetch the games directory listing
         const response = await fetch('games/');
         const html = await response.text();
         
-        // Parse HTML to find all .swf files
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
         const links = doc.querySelectorAll('a');
@@ -46,6 +44,7 @@ function generateGameFromSwfFile(filename) {
 }
 
 let games = [];
+let selectedFile = null;
 
 let currentFilter = "all";
 let currentGame = null;
@@ -62,7 +61,141 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     renderGames();
     setupEventListeners();
+    setupUploadZone();
 });
+
+// Setup upload zone
+function setupUploadZone() {
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const publishBtn = document.getElementById('publishBtn');
+
+    // Click to upload
+    uploadZone.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    // Drag and drop
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        
+        const file = e.dataTransfer.files[0];
+        if (file && file.name.endsWith('.swf')) {
+            selectedFile = file;
+            showFileSelected(file.name, uploadZone);
+        } else {
+            showStatus('❌ Please drop a .SWF file!', 'error');
+        }
+    });
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            selectedFile = file;
+            showFileSelected(file.name, uploadZone);
+        }
+    });
+
+    // Publish button
+    publishBtn.addEventListener('click', () => {
+        if (!selectedFile) {
+            showStatus('❌ Please select a .SWF file first!', 'error');
+            return;
+        }
+        publishGame(selectedFile);
+    });
+}
+
+function showFileSelected(filename, uploadZone) {
+    const uploadContent = uploadZone.querySelector('.upload-content');
+    uploadContent.innerHTML = `
+        <div style="color: var(--accent-color); font-weight: 600; font-size: 1.1rem;">
+            ✅ File Selected: ${filename}
+        </div>
+        <p style="margin-top: 10px; font-size: 0.9rem; color: var(--text-muted);">Click "PUBLISH GAME" button below to upload</p>
+    `;
+    showStatus('', 'clear');
+}
+
+// Publish the selected game
+async function publishGame(file) {
+    // Check file size
+    if (file.size > 50 * 1024 * 1024) {
+        showStatus('❌ File is too large! Maximum 50MB allowed.', 'error');
+        return;
+    }
+
+    showStatus('📤 Publishing your game...', 'uploading');
+
+    try {
+        // Convert file to base64
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const base64File = e.target.result.split(',')[1];
+            
+            try {
+                const response = await fetch('/.netlify/functions/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        filename: file.name,
+                        file: base64File
+                    })
+                });
+
+                if (response.ok) {
+                    showStatus('✅ Game published forever! Refreshing...', 'success');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    showStatus('❌ Upload failed. Make sure you deployed to Netlify!', 'error');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                showStatus('❌ Upload failed. Try deploying to Netlify with serverless functions enabled.', 'error');
+            }
+        };
+        reader.readAsDataURL(file);
+
+    } catch (error) {
+        console.error('Error:', error);
+        showStatus('❌ Something went wrong. Please try again.', 'error');
+    }
+}
+
+// Show upload status
+function showStatus(message, type) {
+    const statusDiv = document.getElementById('uploadStatus');
+    const successDiv = document.getElementById('uploadSuccess');
+    const messageEl = document.getElementById('statusMessage');
+
+    if (type === 'clear') {
+        statusDiv.style.display = 'none';
+        successDiv.style.display = 'none';
+    } else if (type === 'success') {
+        successDiv.style.display = 'block';
+        successDiv.querySelector('p').textContent = message;
+        statusDiv.style.display = 'none';
+    } else {
+        statusDiv.style.display = 'block';
+        messageEl.textContent = message;
+        successDiv.style.display = 'none';
+    }
+}
 
 // Setup all event listeners
 function setupEventListeners() {
@@ -107,7 +240,7 @@ function renderGames() {
     gamesGrid.innerHTML = '';
 
     if (games.length === 0) {
-        gamesGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">No games yet. Add SWF files to /games/ to publish them here forever!</p>';
+        gamesGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">No games published yet. Go to Publish tab and upload a SWF file!</p>';
         return;
     }
 
@@ -150,25 +283,21 @@ function openGameModal(game) {
     currentGame = game;
     const modal = document.getElementById('gameModal');
 
-    // Update modal content
     document.getElementById('modalGameTitle').textContent = game.title;
     document.getElementById('modalGameDeveloper').textContent = `by ${game.developer}`;
     document.getElementById('modalGameYear').textContent = game.year;
     document.getElementById('modalGameCategory').textContent = capitalizeFirst(game.category);
     document.getElementById('modalGameDescription').textContent = game.description;
 
-    // Clear previous Ruffle player
     const ruffleContainer = document.getElementById('ruffleContainer');
     ruffleContainer.innerHTML = '';
 
-    // Create Ruffle player
     const ruffleObject = document.createElement('div');
     ruffleObject.id = 'ruffle-player';
     ruffleObject.style.width = '100%';
     ruffleObject.style.height = '100%';
     ruffleContainer.appendChild(ruffleObject);
 
-    // Initialize Ruffle player
     window.RufflePlayer.newest().createPlayer().then(player => {
         rufflePlayer = player;
         player.load({
@@ -176,7 +305,6 @@ function openGameModal(game) {
             allowScriptAccess: false,
             allowNetworking: 'none'
         }).catch(error => {
-            // Fallback UI if SWF not found
             ruffleContainer.innerHTML = `
                 <div style="text-align: center; padding: 40px; color: var(--text-muted);">
                     <p>⚠️ Game Not Found</p>
@@ -187,7 +315,6 @@ function openGameModal(game) {
         player.appendTo(ruffleObject);
     });
 
-    // Setup buttons
     document.getElementById('fullscreenBtn').onclick = () => {
         if (document.fullscreenElement) {
             document.exitFullscreen();
@@ -235,7 +362,6 @@ function handleSearch() {
         gamesGrid.appendChild(gameCard);
     });
 
-    // Scroll to games section
     document.getElementById('games').scrollIntoView({ behavior: 'smooth' });
 }
 

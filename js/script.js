@@ -1,5 +1,51 @@
-// Game Database
-const games = [
+// Auto-detect all SWF files in /games/ directory
+async function loadGamesAutomatically() {
+    try {
+        // Fetch the games directory listing
+        const response = await fetch('games/');
+        const html = await response.text();
+        
+        // Parse HTML to find all .swf files
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const links = doc.querySelectorAll('a');
+        
+        const swfFiles = [];
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && href.endsWith('.swf')) {
+                swfFiles.push(href);
+            }
+        });
+        
+        return swfFiles;
+    } catch (error) {
+        console.log('Auto-detection not available, using local games list');
+        return null;
+    }
+}
+
+// Generate game data from SWF filename
+function generateGameFromSwfFile(filename) {
+    const name = filename.replace('.swf', '').replace(/-/g, ' ').replace(/_/g, ' ');
+    const capitalizedName = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    
+    const categories = ['action', 'puzzle', 'adventure', 'sports', 'strategy', 'casual'];
+    const emojis = ['🎮', '🎯', '🎲', '🏆', '⚔️', '🧩', '🚀', '🌟'];
+    
+    return {
+        id: Math.random(),
+        title: capitalizedName,
+        developer: 'Classic Flash Game',
+        year: 2010,
+        category: categories[Math.floor(Math.random() * categories.length)],
+        description: `${capitalizedName} - A classic Flash game. Click to play!`,
+        emoji: emojis[Math.floor(Math.random() * emojis.length)],
+        swf: `games/${filename}`
+    };
+}
+
+let games = [
     {
         id: 1,
         title: "Flash Quest Adventure",
@@ -127,7 +173,15 @@ let currentGame = null;
 let rufflePlayer = null;
 
 // Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Try to auto-detect SWF files
+    const detectedFiles = await loadGamesAutomatically();
+    
+    // If we found SWF files, use them instead of default list
+    if (detectedFiles && detectedFiles.length > 0) {
+        games = detectedFiles.map(filename => generateGameFromSwfFile(filename));
+    }
+    
     renderGames();
     setupEventListeners();
 });
@@ -244,7 +298,7 @@ function openGameModal(game) {
                 <div style="text-align: center; padding: 40px; color: var(--text-muted);">
                     <p>🎮 Game Player Ready</p>
                     <p style="font-size: 0.9rem; margin-top: 10px;">SWF file: ${game.swf}</p>
-                    <p style="font-size: 0.8rem; margin-top: 20px;">Demo mode: Add your SWF files to /assets/games/</p>
+                    <p style="font-size: 0.8rem; margin-top: 20px;">Add your SWF files to /games/</p>
                 </div>
             `;
         });
